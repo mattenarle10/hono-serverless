@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun --watch src/local.ts",
+    "client": "bun run src/client.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "synth": "cdk synth",
