@@ -3,6 +3,7 @@ import { Construct } from 'constructs'
 import * as apigateway from 'aws-cdk-lib/aws-apigatewayv2'
 import * as integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
+import * as logs from 'aws-cdk-lib/aws-logs'
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs'
 
 export class ApiStack extends cdk.Stack {
@@ -40,6 +41,22 @@ export class ApiStack extends cdk.Stack {
         allowOrigins: ['*'],
       },
     })
+
+    const accessLogs = new logs.LogGroup(this, 'HttpApiAccessLogs', {
+      retention: logs.RetentionDays.ONE_WEEK,
+    })
+    const stage = api.defaultStage!
+    const stageResource = stage.node.defaultChild as apigateway.CfnStage
+    stageResource.accessLogSettings = {
+      destinationArn: new apigateway.LogGroupLogDestination(accessLogs).bind(stage).destinationArn,
+      format: JSON.stringify({
+        requestId: '$context.requestId',
+        method: '$context.httpMethod',
+        path: '$context.path',
+        status: '$context.status',
+        latencyMs: '$context.responseLatency',
+      }),
+    }
 
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: api.url!,
